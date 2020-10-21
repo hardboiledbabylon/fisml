@@ -1,0 +1,171 @@
+Free Indirect Semi-Semantic Markup Language
+
+FISML (pronounced FIZZ-MULL) is an almost-free-form tagged formatting
+preprocessor language.
+
+Tags are non-space-containing alphanumeric sequences enclosed in {}
+pairs (except when they're not).
+
+It is not designed to be an interchange format.
+
+And it likely has little utility to anyone else and is here more so
+as part of a project to document a specific workflow related to
+the creation of the materials at:
+
+https://github.com/hardboiledbabylon/athenaeum_miscellanea
+
+Those parts that may contain some general utility have their own project
+pages. See the individual descriptions below for more.
+
+==GENERAL PROGRAM DESCRIPTION==
+
+fisml_decomment.pl -> Remove lines containing comments.
+
+fisml_hyphen.pl -> Ignore FISML tags and generate a list of words
+                   that LaTex might have trouble hyphenating on its
+                   own.  The words are outputted in the format used
+                   by LaTex.
+
+fisml_lint.pl -> Check files for certain common formatting mistakes
+                 that can cause breakage.
+
+fisml_strip.pl -> Strip all FISML tags from input.
+
+fisml_do.pl -> Replace given FISML tags with specified strings.
+
+fisml_trs.pl -> Non-recursively replace a given char with a string.
+
+fisml_wc.pl -> Counts words in a file, ignoring FISML tags.
+
+fisml_tags.pl -> List all FISML tags.
+
+fisml_footnoter.pl -> Reads FISML files containing footnote descriptions
+                      and anchor tags and generates a basic FISML output
+                      file based on where the specified footnotes should
+                      be placed and how they should be structured.
+
+fisml_get_attr.pl -> Get the contents of an attribute line from a FISML
+                     file.
+
+fisml_unabbrev.pl -> Convert abbreviated FISML tags to their paired
+                     equivalents.
+
+==HELPER PROGRAM DESCRIPTION==
+
+count_quote.pl -> Count the number of typographical quotations in a
+                  source file to check for balance.
+
+fsnip.pl -> Splice text from a file that falls between lines containing
+            two patterns.
+
+fsplit.pl -> Split a file based on a pattern.
+
+non_ascii.pl -> List an characters outside of the ASCII-compatible range
+                of UTF8.
+
+justwords.pl -> Remove all punctuation characters from input.
+
+paba.pl -> If the first line of a paragraph in input matches a specified
+           regex, place a specified string at the start of the paragraph
+           and another specified string at the end of the paragraph.
+
+rmspcptt.pl -> Modify the amount of space or newline characters around
+               a given set of regex matches based on certain specified
+               criteria.
+
+===EMACS===
+
+fisml.el -> A FISML major mode for emacs.
+
+dfh-pair.pl -> Helper routines for inserting paired structures.
+
+dfh-faces.pl -> Face help routines.
+
+dfh-regex.el -> Regex routines.
+
+dfh-str.el -> String routines.
+
+dfh-util.el -> Various utility functions.
+
+dfh-wc.el -> A word-count framework.
+
+smartish-quotes.el -> Lightweight automatic typographic quotations.
+                 (For the standalone version, see:
+                  https://github.com/hardboiledbabylon/smartish-quotes.el)
+
+spellsuggest.el -> Suggest and replace misspelled words.
+                 (For the standalone version, see:
+                  https://github.com/hardboiledbabylon/spellsuggest.el)
+
+utf2ascii.el -> Display certain UTF8 characters as ASCII in a 
+                visually distinct manner.
+
+read-along.el -> Highlight text and send it to a TTS engine.
+                 (For the standalone version, see:
+                  https://github.com/hardboiledbabylon/read-along.el)
+
+fisml-wc.el -> FISML specific word-count routine to be used by dfh-wc.el
+
+backspace.el -> Backspace keybindings that provide helpful functions
+                when working with FISML tags.
+
+afill.el -> An alternate paragraph filling mode that is flexible enough
+         to take into account various alternate conventions, such as
+         FISML comment formatting.
+
+===FISML ATTRIBUTES===
+
+FISML attributes take the form of special comment lines.
+
+The format is:
+
+{!!}{@}{FOO}BAR
+
+where FOO is the attribute ID and BAR is the value of that ID.
+
+===FILE FORMATS===
+
+When an input file is specified, fisml_do.pl expects the following
+format:
+
+{FOO}||BAR BAR BAR||
+
+To specify a non-string literal (such as adding a newline) use the form:
+
+{FOO}|e|BAR^MBAR^MBAR||
+
+Here, every occurrence of ^M will be replaced with a newline character.
+
+When an input file is specified, fisml_trs.pl expects the following
+format:
+
+F||BAR BAR BAR||
+
+where F is a single character.
+
+Too, fisml_trs.pl also accepts the same non-string-literal format as
+fisml_do.pl
+
+In both formats, any invalid line is ignored.
+
+The final terminating vertical bars are to allow for the protection of
+blank spaces at the end of strings that might be silently removed by
+editors.
+
+===FISML CONVENTIONS===
+
+Lines beginning with the tag {!!} are considered comments.
+
+Paired tags usually take the form of {FOO>}{<FOO} where the greater-than
+specifies the opening tag and the lesser-than the closing tag.
+
+The special tag {FOO#} at the beginning of a paragraph is conventionally
+used to identify an abbreviated tag. Using fisml_unabbrev.pl {FOO#} at
+the beginning of a paragraph would would be replaced by {FOO>} and
+{<FOO} and the beginning and end of the paragraph respectively. Only one
+abbreviated tag per paragraph is currently supported and they cannot be
+nested.
+
+Of course, these are just conventions. Technically speaking, all FISML
+tags are always semi-meaningless except in specific output contexts.
+That's the point.

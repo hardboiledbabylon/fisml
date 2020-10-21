@@ -1,0 +1,229 @@
+
+(require 'dfh-wc)
+(require 'fisml-wc)
+(setq dfh-wc-modes (list 'fisml-mode 'fisml--just-words))
+
+(require 'fisml)
+
+(require 'smartish-quotes)
+(setq smartish-single-quote-left "‘")
+(setq smartish-single-quote-right "’")
+(setq smartish-double-quote-left "“")
+(setq smartish-double-quote-right "”")
+;;(setq smartish-single-quote-left "{`}")
+;;(setq smartish-single-quote-right "{'}")
+;;(setq smartish-double-quote-left "{``}")
+;;(setq smartish-double-quote-right "{''}")
+(setq smartish-quotes-user-custom-open-str "{}")
+
+(require 'read-along)
+
+(global-set-key (kbd "C-c r b") 'read-along-buf)
+(global-set-key (kbd "C-c r l") 'read-along-line)
+(global-set-key (kbd "C-c r t") 'read-along-this)
+(global-set-key (kbd "C-c r s") 'read-along-stop)
+(global-set-key (kbd "C-c r >") 'read-along-to-end-of-line)
+(global-set-key (kbd "C-c r <") 'read-along-from-beginning-of-line)
+;; these require afill.el
+(global-set-key (kbd "C-c r p") (lambda () (interactive)
+				  (if (in-paragraph-p)
+				      (read-along-between
+				       (paragraph-beginning-position)
+				       (paragraph-end-position)))))
+(global-set-key (kbd "C-c r [") (lambda () (interactive)
+				  (if (in-paragraph-p)
+				      (read-along-between
+				       (paragraph-beginning-position)
+				       (point)))))
+(global-set-key (kbd "C-c r ]") (lambda () (interactive)
+				  (if (in-paragraph-p)
+				      (read-along-between
+				       (point)
+				       (paragraph-end-position)))))
+
+(setq read-along-nobreak "{[^{]*?}\\|\\`[^{]*?}\\|{[^}]*\\'")
+
+(setq read-along-string-skips '("{}"
+                            "{...}"
+                            "{...$}"
+                            "{^...}"
+                            "{...%}"                            
+                            "{%...%}"
+                            "{....}"
+                            "{---}"
+                            "{--}"
+                            "{---$}"
+                            "{^---}"
+                            "{---%}"
+                            "{%---%}"
+                            "{``}"
+                            "{''}"
+                            "{\"---}"
+                            "{---\"}"
+                            "{---,}"))
+
+(setq read-along-nobreak-exclude read-along-string-skips)
+
+(read-along-update-variables)
+
+;; "{[^{]*?}\\|\\`[^{]*?}\\|{[^}]*\\'" -> applied last
+(setq read-along-transforms `(("-" " ")
+                                (,(regexp-quote "{'e}") "e")
+                                (,(regexp-quote "{,c}") "c")
+                                (,(regexp-quote "{,C}") "C")
+                                (,(regexp-quote "{\"o}") "o")
+                                (,(regexp-quote "{^^Z}") "Z")
+                                (,(regexp-quote "{^^z}") "z")
+                                (,(regexp-quote "{TRADEMARK}") " TRADEMARK ")
+                                (,(regexp-quote "{REGISTERED}") " REGISTERED ")
+                                (,(regexp-quote "{COPYRIGHT}") " COPYRIGHT ")
+                                ( "{__\\(.+?\\)__}" "\\1")
+                                ( "{DROP>}\\|{<DROP}" "")
+                                ( "{[^{]*?}\\|\\`[^{]*?}\\|{[^}]*\\'" " ")
+                                ;; ( "[0-9][0-9]" "")
+                                ))
+
+(setq read-along-log-events nil)
+(setq read-along-always-stop-at-end nil)
+;; don't downcase when using espeak ??
+(setq read-along-downcase t)
+(setq read-along-redisplay-window t)
+
+;; triple the default
+(setq read-along-max 320)
+
+(setq read-along-engine '(cmd "espeak-ng" args ("-s" "280")))
+
+(require 'utf2ascii)
+(global-utf2ascii-mode 1)
+
+(add-hook 'fisml-mode-hook 'smartish-quotes)
+
+(defun draft-spell-check-hook ()
+  (save-excursion
+    (save-match-data
+      (goto-char (point-min))
+      (unless (search-forward-regexp "^{!!}DRAFT0" 200 t 1)
+	(wcheck-mode)
+        ))))
+
+;; this is not buffer local
+(defun draft-wc-hook ()
+  (save-excursion
+    (save-match-data
+      (goto-char (point-min))
+      (when (search-forward-regexp "^{!!}DRAFT0" 200 t 1)
+	(defalias 'wc 'wc-null)
+        (defalias 'wcba 'wc-null)))))
+
+(defun draft-hl-hook ()
+    (save-excursion
+      (save-match-data
+        (goto-char (point-min))
+        (unless (search-forward-regexp "^{!!}DRAFT0" 200 t 1)
+	  (hl-line-mode)))))
+
+(defun fisml-draft-hooks ()
+  (save-excursion
+    (save-match-data
+      (goto-char (point-min))
+      (if (search-forward-regexp "^{!!}DRAFT0" 200 t 1)
+          (setq-local dfh-word-count-enable nil)
+	(hl-line-mode)
+        (spell-fu-mode))
+      (goto-char (point-min))
+      (if (search-forward-regexp "^{!!}::READ_ONLY::" 200 t 1)
+          (setq buffer-read-only t)))))
+
+(add-hook 'fisml-mode-hook 'fisml-draft-hooks)
+
+(require 'afill)
+(add-hook 'fisml-mode-hook 'afill)
+(setq afill-sentence-mark "{}")
+(setq afill-comment-prefix "{!!}")
+;;(setq afill-disable-flyspell t)
+
+(setq-default fill-column 72)
+(setq FISML_COLUMN 62)
+
+(defun fisml-column-hook ()
+  (setq fill-column FISML_COLUMN))
+
+(add-hook 'fisml-mode-hook 'fisml-column-hook)
+
+(defun get-left-margin-pad ( C )
+  (let ((W (window-width)))
+    (if W
+        (if (> W (+ C 1))
+            (/ (- W C) 2)
+          0)
+      0)))
+
+(defun fisml-window-hook ()
+  (setq left-margin-width 0)
+  (set-window-buffer (selected-window) (current-buffer))
+  (setq left-margin-width (get-left-margin-pad FISML_COLUMN))
+  (set-window-buffer (selected-window) (current-buffer)))
+
+(add-hook 'fisml-mode-hook 'fisml-window-hook)
+
+(defun repad-left-margin ()
+  (interactive)
+  (setq left-margin-width 0) ;; affects (window-width)
+  (set-window-buffer (selected-window) (current-buffer))
+  (setq left-margin-width (get-left-margin-pad fill-column))
+  (set-window-buffer (selected-window) (current-buffer)))
+
+(defun get-exactly-line ()
+  (let ((beg (line-beginning-position))
+        (end (line-end-position)))
+    (if (> (- end beg) 0)
+        (cons beg end)
+      nil)))
+
+(setq-default hl-line-range-function 'get-exactly-line)
+
+;; bindings
+(global-set-key (kbd "C-c }") 'paragraph-next)
+(global-set-key (kbd "C-c {") 'paragraph-prev)
+(global-set-key (kbd "C-c k") 'afill-kill-paragraph)
+(global-set-key (kbd "C-c K") 'afill-kill-paragraph-replace)
+(global-set-key (kbd "C-c .") 'afill-fill-paragraph)
+(global-set-key (kbd "C-c [") 'paragraph-beginning)
+(global-set-key (kbd "C-c ]") 'paragraph-end)
+
+(require 'backspace)
+(add-hook 'fisml-mode-hook 'backspace)
+
+(require 'spellsuggest)
+(setq spellsuggest-program "/usr/bin/hunspell")
+(setq spellsuggest-args '("-i" "UTF8"))
+(spellsuggest-variables-update)
+
+(defun fisml-first-para-this ()
+  (interactive)
+  (if (and (bopp) (eopp))
+      (fisml-insert-first-para)
+    (save-excursion
+      (paragraph-beginning)
+      (fisml-insert-first-para)
+      (afill-fill-paragraph))))
+
+;; shadow declarations in fisml.el
+
+(defun fisml-insert-section ()
+  (interactive)
+  (insert "{SECTION}")
+  (newline 2)
+  (insert "{1ST_PARA#}"))
+
+(defun fisml-insert-chapter ()
+  (interactive)
+  (insert "{CHAPTER}")
+  (newline 2)
+  (insert "{1ST_PARA#}"))
+
+(require 'dfh-util)
+
+(setq read-along-ignore-faces '(fisml-comment-attr-face fisml-comment-face))
+
