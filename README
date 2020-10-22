@@ -161,8 +161,8 @@ specifies the opening tag and the lesser-than the closing tag.
 
 The special tag {FOO#} at the beginning of a paragraph is conventionally
 used to identify an abbreviated tag. Using fisml_unabbrev.pl {FOO#} at
-the beginning of a paragraph would would be replaced by {FOO>} and
-{<FOO} and the beginning and end of the paragraph respectively. Only one
+the beginning of a paragraph would be replaced by {FOO>} and {<FOO} and
+the beginning and end of the paragraph respectively. Only one
 abbreviated tag per paragraph is currently supported and they cannot be
 nested.
 
