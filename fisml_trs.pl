@@ -41,31 +41,28 @@ my %replacements;
 
 my @specs;
 
-sub process_escape {
+sub process_escape{
 
     my $line = shift;
     my $ESC_P = FALSE;
 
-    my @pieces = split( //, $line );
+    my @pieces = split( /(\^M|\^\#[0-9A-F][0-9A-F][0-9A-F][0-9A-F])/i, $line );
 
     my @give;
     
     foreach my $c (@pieces){
 
-	if( $c eq "^" and not $ESC_P ){
-	    $ESC_P = TRUE;
-	    next;
+	if( $c eq "^M" ){
+		push( @give, "\n" );           
 	}
-	else{
-	    if( $ESC_P and $c eq "M" ){
-		push( @give, "\n" );
-	    }
-	    else{
-		push( @give, $c );
-	    }
-	    $ESC_P = FALSE;
-	}
+        elsif( $c =~ m/\^\#([0-9A-F][0-9A-F][0-9A-F][0-9A-F])/i ){
+            push( @give, chr(sprintf("%d", hex($1))) );
+        }
+        else{
+            push( @give, $c );
+        }
     }
+
     return join( "", @give );
 }
 
