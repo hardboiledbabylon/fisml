@@ -20,15 +20,19 @@
 (defun dfh-replace-regexp (SRC REP BEG END)
   (save-match-data
     (save-excursion
-      (goto-char BEG)
-      (while (re-search-forward SRC END t nil)
-	(replace-match REP)))))
+      (save-restriction
+        (narrow-to-region BEG END)
+        (goto-char (point-min))
+        (while (re-search-forward SRC nil t nil)
+	  (replace-match REP))))))
 
 (defun dfh-replace-string (SRC REP BEG END)
-    (save-match-data
+  (save-match-data
     (save-excursion
-      (goto-char BEG)
-      (while (search-forward SRC END t nil)
-	(replace-match REP)))))
+      (save-restriction
+        (narrow-to-region BEG END)
+        (goto-char (point-min))
+        (while (search-forward SRC nil t nil)
+	  (replace-match REP))))))
 
 (provide 'dfh-regex)
